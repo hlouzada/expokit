@@ -10,9 +10,9 @@ using namespace slisc;
 
 // translate as directly as possible for now:
 // * any variable values should not change
-// * assuming vectors are 1-based for now
 // * change all variables to lower case
 // * don't change BLAC/LAPACK routines
+// * all pointer indexing (including +, -) is subtracted by 1 in place
 
 void ZHEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I anorm,
 			Comp *wsp, Int_I lwsp, Int *iwsp, Int_I liwsp, McooComp_I matvec, Int_I itrace, Int_O iflag )
@@ -96,27 +96,27 @@ void ZHEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 		beta = cblas_dznrm2(n, w, 1);
 		p1 = 1. / beta;
 		for (i = 1; i <= n; ++i) {
-			wsp[iv + i - 1] = p1 * w[i];
+			wsp[iv + i - 2] = p1 * w[i-1];
 		}
 		for (i = 1; i <= mh * mh; ++i) {
-			wsp[ih + i - 1] = zero;
+			wsp[ih + i - 2] = zero;
 		}
 
 		j1v = iv + n;
 		Bool break_flag = false;
 		/*200*/ for (j = 1; j <= m; ++j) {
 			nmult = nmult + 1;
-			matvec.mul(wsp + j1v - n, wsp + j1v);
+			mul(wsp + j1v - n - 1, matvec, wsp + j1v - 1);
 			if (j > 1) {
-				temp = -wsp[ih + (j - 1)*mh + j - 2];
-				cblas_zaxpy(n, &temp, wsp + j1v - 2 * n, 1, wsp + j1v, 1);
+				temp = -wsp[ih + (j - 1)*mh + j - 3];
+				cblas_zaxpy(n, &temp, wsp + j1v - 2 * n - 1, 1, wsp + j1v - 1, 1);
 			}
 				
-			cblas_zdotc_sub(n, wsp + j1v - n, 1, wsp + j1v, 1, &hjj);
+			cblas_zdotc_sub(n, wsp + j1v - n - 1, 1, wsp + j1v - 1, 1, &hjj);
 			temp = -hjj;
-			cblas_zaxpy(n, &temp, wsp + j1v - n, 1, wsp + j1v, 1);
-			hj1j = cblas_dznrm2(n, wsp + j1v, 1);
-			wsp[ih + (j - 1)*(mh + 1)] = hjj;
+			cblas_zaxpy(n, &temp, wsp + j1v - n - 1, 1, wsp + j1v - 1, 1);
+			hj1j = cblas_dznrm2(n, wsp + j1v - 1, 1);
+			wsp[ih + (j - 1)*(mh + 1) - 1] = hjj;
 
 			if (hj1j <= break_tol) {
 				cout << "happy breakdown: mbrkdwn =" << j << " h = " << hj1j << endl;
@@ -128,21 +128,21 @@ void ZHEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 				break_flag = true;
 				break;
 			}
-			wsp[ih + (j - 1)*mh + j] = Comp(hj1j);
-			wsp[ih + j * mh + j - 1] = Comp(hj1j);
-			cblas_zdscal(n, 1. / hj1j, wsp + j1v, 1);
+			wsp[ih + (j - 1)*mh + j - 1] = Comp(hj1j);
+			wsp[ih + j * mh + j - 2] = Comp(hj1j);
+			cblas_zdscal(n, 1. / hj1j, wsp + j1v - 1, 1);
 			j1v = j1v + n;
 		}
 
 		if (!break_flag) {
 			nmult = nmult + 1;
-			matvec.mul(wsp + j1v - n, wsp + j1v);
-			avnorm = cblas_dznrm2(n, wsp + j1v, 1);
+			mul(wsp + j1v - n - 1, matvec, wsp + j1v - 1);
+			avnorm = cblas_dznrm2(n, wsp + j1v - 1, 1);
 		}
 
 		/*300*/
-		wsp[ih + m * mh + m - 1] = zero;
-		wsp[ih + m * mh + m + 1] = one;
+		wsp[ih + m * mh + m - 2] = zero;
+		wsp[ih + m * mh + m] = one;
 
 		ireject = 0;
 
@@ -150,18 +150,18 @@ void ZHEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 			nexph = nexph + 1;
 			mx = mbrkdwn + k1;
 			if (ideg != 0) {
-				ZGPADM(ideg, mx, sgn*t_step, wsp + ih, mh,
-					wsp + ifree, lfree, iwsp, iexph, ns, iflag);
+				ZGPADM(ideg, mx, sgn*t_step, wsp + ih - 1, mh,
+					wsp + ifree - 1, lfree, iwsp, iexph, ns, iflag);
 				iexph = ifree + iexph - 1;
 				nscale = nscale + ns;
 			}
 			else {
 				iexph = ifree;
 				for (i = 1; i <= mx; ++i) {
-					wsp[iexph + i - 1] = zero;
+					wsp[iexph + i - 2] = zero;
 				}
-				wsp[iexph] = one;
-				ZNCHBV(mx, sgn*t_step, wsp + ih, mh, wsp + iexph, wsp + ifree + mx);
+				wsp[iexph - 1] = one;
+				ZNCHBV(mx, sgn*t_step, wsp + ih - 1, mh, wsp + iexph - 1, wsp + ifree + mx - 1);
 			}
 
 			/*402*/
@@ -170,8 +170,8 @@ void ZHEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 				err_loc = tol;
 			}
 			else {
-				p1 = abs(wsp[iexph + m])   * beta;
-				p2 = abs(wsp[iexph + m + 1]) * beta * avnorm;
+				p1 = abs(wsp[iexph + m - 1])   * beta;
+				p2 = abs(wsp[iexph + m]) * beta * avnorm;
 				if (p1 > 10. * p2) {
 					err_loc = p2;
 					xm = 1. / Doub(m);
@@ -214,7 +214,8 @@ void ZHEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 
 		mx = mbrkdwn + MAX(0, k1 - 1);
 		hjj = Comp(beta);
-		cblas_zgemv(CblasColMajor, CblasNoTrans, n, mx, &hjj, wsp + iv, n, wsp + iexph, 1, &zero, w, 1);
+		cblas_zgemv(CblasColMajor, CblasNoTrans, n, mx, &hjj,
+			wsp + iv - 1, n, wsp + iexph - 1, 1, &zero, w, 1);
 		beta = cblas_dznrm2(n, w, 1);
 		hump = MAX(hump, beta);
 
@@ -245,22 +246,22 @@ void ZHEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 
 	/*500*/
 
-	iwsp[1] = nmult;
-	iwsp[2] = nexph;
-	iwsp[3] = nscale;
-	iwsp[4] = nstep;
-	iwsp[5] = nreject;
-	iwsp[6] = ibrkflag;
-	iwsp[7] = mbrkdwn;
+	iwsp[0] = nmult;
+	iwsp[1] = nexph;
+	iwsp[2] = nscale;
+	iwsp[3] = nstep;
+	iwsp[4] = nreject;
+	iwsp[5] = ibrkflag;
+	iwsp[6] = mbrkdwn;
 
-	wsp[1] = Comp(step_min);
-	wsp[2] = Comp(step_max);
+	wsp[0] = Comp(step_min);
+	wsp[1] = Comp(step_max);
+	wsp[2] = Comp(0.);
 	wsp[3] = Comp(0.);
-	wsp[4] = Comp(0.);
-	wsp[5] = Comp(x_error);
-	wsp[6] = Comp(s_error);
-	wsp[7] = Comp(tbrkdwn);
-	wsp[8] = Comp(sgn*t_now);
-	wsp[9] = Comp(hump / vnorm);
-	wsp[10] = Comp(beta / vnorm);
+	wsp[4] = Comp(x_error);
+	wsp[5] = Comp(s_error);
+	wsp[6] = Comp(tbrkdwn);
+	wsp[7] = Comp(sgn*t_now);
+	wsp[8] = Comp(hump / vnorm);
+	wsp[9] = Comp(beta / vnorm);
 }

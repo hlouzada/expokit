@@ -4,6 +4,12 @@
 #include <mkl.h>
 using namespace slisc;
 
+// translate as directly as possible for now:
+// * any variable values should not change
+// * change all variables to lower case
+// * don't change BLAC/LAPACK routines
+// * all pointer indexing (including +, -) is subtracted by 1 in place
+
 void ZNCHBV(Int_I m, Doub_I t, const Comp *H, Int_I ldh, Comp *y, Comp *wsp)
 {
 	const Comp zero = 0.;
@@ -41,47 +47,47 @@ void ZNCHBV(Int_I m, Doub_I t, const Comp *H, Int_I ldh, Comp *y, Comp *wsp)
 	}
 
 	for (j = 1; j <= m; ++j) {
-		wsp[iz + j - 1] = y[j];
-		y[j] = y[j] * alpha0;
+		wsp[iz + j - 2] = y[j - 1];
+		y[j - 1] = y[j - 1] * alpha0;
 	}
 
 	for (ip = 1; ip <= 2 * ndeg; ++ip) {
 		alpha[ip] = 0.5*alpha[ip];
 		for (j = 1; j <= m; ++j) {
-			wsp[iy + j - 1] = wsp[iz + j - 1];
+			wsp[iy + j - 2] = wsp[iz + j - 2];
 			for (i = 1; i <= MIN(j + 1, m); ++i) {
-				wsp[ih + (j - 1)*m + i - 1] = -t*H[i + ldh*(j-1)];
+				wsp[ih + (j - 1)*m + i - 2] = -t*H[i + ldh*(j-1) - 1];
 			}
-			wsp[ih + (j - 1)*m + j - 1] = wsp[ih + (j - 1)*m + j - 1] - theta[ip];
+			wsp[ih + (j - 1)*m + j - 2] = wsp[ih + (j - 1)*m + j - 2] - theta[ip];
 			for (k = i; k <= m; ++k) {
-				wsp[ih + (j - 1)*m + k - 1] = zero;
+				wsp[ih + (j - 1)*m + k - 2] = zero;
 			}
 		}
 		for (j = 1; j <= m; ++j) {
 
 		}
 		for (i = 1; i <= m - 1; ++i) {
-			if (abs(wsp[ih + (i - 1)*m + i - 1]) < abs(wsp[ih + (i - 1)*m + i])) {
-				cblas_zswap(m - i + 1, wsp + ih + (i - 1)*m + i - 1, m,
-					wsp + ih + (i - 1)*m + i, m);
-				cblas_zswap(1, wsp + iy + i - 1, 1, wsp + iy + i, 1);
+			if (abs(wsp[ih + (i - 1)*m + i - 2]) < abs(wsp[ih + (i - 1)*m + i - 1])) {
+				cblas_zswap(m - i + 1, wsp + ih + (i - 1)*m + i - 2, m,
+					wsp + ih + (i - 1)*m + i - 1, m);
+				cblas_zswap(1, wsp + iy + i - 2, 1, wsp + iy + i - 1, 1);
 			}
 
-			tmpc = wsp[ih + (i - 1)*m + i] / wsp[ih + (i - 1)*m + i - 1];
+			tmpc = wsp[ih + (i - 1)*m + i - 1] / wsp[ih + (i - 1)*m + i - 2];
 			Comp temp = -tmpc;
-			cblas_zaxpy(m - i, &temp, wsp + ih + i*m + i - 1, m, wsp + ih + i*m + i, m);
-			wsp[iy + i] = wsp[iy + i] - tmpc*wsp[iy + i - 1];
+			cblas_zaxpy(m - i, &temp, wsp + ih + i*m + i - 2, m, wsp + ih + i*m + i - 1, m);
+			wsp[iy + i - 1] = wsp[iy + i - 1] - tmpc*wsp[iy + i - 2];
 		}
 
 		for (i = m; i >= 1; --i) {
-			tmpc = wsp[iy + i - 1];
+			tmpc = wsp[iy + i - 2];
 			for (j = i + 1; j <= m; ++j) {
-				tmpc = tmpc - wsp[ih + (j - 1)*m + i - 1]*wsp[iy + j - 1];
+				tmpc = tmpc - wsp[ih + (j - 1)*m + i - 2]*wsp[iy + j - 2];
 			}
-			wsp[iy + i - 1] = tmpc / wsp[ih + (i - 1)*m + i - 1];
+			wsp[iy + i - 2] = tmpc / wsp[ih + (i - 1)*m + i - 2];
 		}
 		for (j = 1; j <= m; ++j) {
-			y[j] = y[j] + alpha[ip]*wsp[iy + j - 1];
+			y[j - 1] = y[j - 1] + alpha[ip]*wsp[iy + j - 2];
 		}
 	}
 }

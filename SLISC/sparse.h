@@ -236,4 +236,16 @@ void mul(VecDoub_O v, const McooDoub_I a, const VecDoub_I v1)
 	}
 }
 
+template <class T>
+void mul(T *v, const MatCoo<T> &a, const T *v1)
+{
+	Long i;
+	for (i = 0; i < a.ncols(); ++i) {
+		v[i] = 0.;
+	}
+	for (i = 0; i < a.nnz(); ++i) {
+		v[a.row(i)] += a(i) * v1[a.col(i)];
+	}
+}
+
 } // namespace slisc
