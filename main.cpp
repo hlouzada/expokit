@@ -1,23 +1,15 @@
-#include <iostream>
-#include "SLISC/slisc.h"
-#include "SLISC/sparse.h"
-#include "SLISC/disp.h"
-#include "SLISC/arithmatic.h"
-#include <mkl.h>
 #include "zhexpv.h"
 #include "zgexpv.h"
-
-using namespace slisc;
+#include "SLISC/disp.h"
 using std::cout; using std::endl;
 
-Doub norm_inf(McooComp_I A)
-{
-	VecDoub abs_sum(A.nrows(), 0.);
-	for (Int i = 1; i < A.nnz(); ++i) {
-		abs_sum(A.row(i)) += abs(A(i));
-	}
-	return max(abs_sum);
-}
+// vector classes
+using slisc::VecDoub;
+using slisc::VecComp;
+using slisc::VecInt;
+using slisc::linspace; // linearly spaced sequence
+using slisc::norm_inf; // infinite norm
+using slisc::disp; // print vectors
 
 void test_EXPV()
 {
@@ -58,6 +50,10 @@ void test_EXPV()
 	Int itrace = 1;
 	Int iflag;
 	ZHEXPV(n, m, t, v.ptr(), w.ptr(), tol, anorm,
+		wsp.ptr(), lwsp, iwsp.ptr(), liwsp, A, itrace, iflag);
+	disp(w, 16);
+	w = 0.;
+	ZGEXPV(n, m, t, v.ptr(), w.ptr(), tol, anorm,
 		wsp.ptr(), lwsp, iwsp.ptr(), liwsp, A, itrace, iflag);
 	disp(w, 16);
 }

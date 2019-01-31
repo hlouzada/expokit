@@ -1,10 +1,5 @@
 #pragma once
-#include "SLISC/slisc.h"
-#include <iostream>
-#include <mkl.h>
-
-using namespace slisc;
-using std::cout; using std::endl;
+#include "common.h"
 
 // ======== translation details ============
 // variables that subtracted 1 comparing to F77 version

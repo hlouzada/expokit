@@ -1,8 +1,5 @@
 #pragma once
-#include <iostream>
-#include "SLISC/slisc.h"
-#include <mkl.h>
-using namespace slisc;
+#include "common.h"
 
 // translate as directly as possible for now:
 // * any variable values should not change

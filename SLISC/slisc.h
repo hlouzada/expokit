@@ -27,6 +27,7 @@ namespace slisc
 typedef const int &Int_I; // 32 bit integer
 typedef int Int;
 typedef int &Int_O, &Int_IO;
+
 typedef const unsigned int &Uint_I;
 typedef unsigned int Uint;
 typedef unsigned int &Uint_O, &Uint_IO;
@@ -35,6 +36,7 @@ typedef unsigned int &Uint_O, &Uint_IO;
 typedef const __int64 &Llong_I; // 64 bit integer
 typedef __int64 Llong;
 typedef __int64 &Llong_O, &Llong_IO;
+
 typedef const unsigned __int64 &Ullong_I;
 typedef unsigned __int64 Ullong;
 typedef unsigned __int64 &Ullong_O, &Ullong_IO;

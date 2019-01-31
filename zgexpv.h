@@ -1,12 +1,7 @@
 #pragma once
-#include <iostream>
-#include "SLISC/slisc.h"
-#include "SLISC/sparse.h"
-#include <mkl.h>
+#include "common.h"
 #include "zgpadm.h"
 #include "znchbv.h"
-using std::cout; using std::endl;
-using namespace slisc;
 
 // ======== translation details ============
 // variables that subtracted 1 comparing to F77 version
@@ -106,7 +101,7 @@ void ZGEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 		Bool break_flag = false;
 		for (j = 0; j < m; ++j) {
 			nmult = nmult + 1;
-			mul(wsp + j1v - n, matvec, wsp + j1v);
+			mul(wsp + j1v, matvec, wsp + j1v - n);
 			for (i = 0; i < j + 1; ++i) {
 				cblas_zdotc_sub(n, wsp + iv + i*n, 1, wsp + j1v, 1, &hij);
 				Comp temp = -hij;
@@ -116,7 +111,7 @@ void ZGEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 			hj1j = cblas_dznrm2(n, wsp + j1v, 1);
 
 			if (hj1j <= break_tol) {
-				cout << "happy breakdown: mbrkdwn = " << j + 1 << "h = " << hj1j << endl;
+				std::cout << "happy breakdown: mbrkdwn = " << j + 1 << "h = " << hj1j << std::endl;
 				k1 = 0;
 				ibrkflag = 1;
 				mbrkdwn = j + 1;
@@ -132,7 +127,7 @@ void ZGEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 
 		if (!break_flag) {
 			nmult = nmult + 1;
-			mul(wsp + j1v - n, matvec, wsp + j1v);
+			mul(wsp + j1v, matvec, wsp + j1v - n);
 			avnorm = cblas_dznrm2(n, wsp + j1v, 1);
 		}
 
@@ -186,17 +181,17 @@ void ZGEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 				p1 = pow(10., round(log10(t_step) - sqr1) - 1);
 				t_step = trunc(t_step / p1 + 0.55) * p1;
 				if (itrace != 0) {
-					cout << "t_step = " << t_old << endl;
-					cout << "err_loc = " << err_loc << endl;
-					cout << "err_required =" << delta*t_old*tol << endl;
-					cout << "stepsize rejected, stepping down to:" << t_step << endl;
+					std::cout << "t_step = " << t_old << std::endl;
+					std::cout << "err_loc = " << err_loc << std::endl;
+					std::cout << "err_required =" << delta*t_old*tol << std::endl;
+					std::cout << "stepsize rejected, stepping down to:" << t_step << std::endl;
 				}
 				ireject = ireject + 1;
 				nreject = nreject + 1;
 				if (mxreject != 0 && ireject > mxreject) {
-					cout << "Failure in ZGEXPV: ---" << endl;
-					cout << "The requested tolerance is too high." << endl;
-					cout << "Rerun with a smaller value." << endl;
+					std::cout << "Failure in ZGEXPV: ---" << std::endl;
+					std::cout << "The requested tolerance is too high." << std::endl;
+					std::cout << "Rerun with a smaller value." << std::endl;
 					iflag = 2;
 					return;
 				}
@@ -220,11 +215,11 @@ void ZGEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 		t_now = t_now + t_step;
 
 		if (itrace != 0) {
-			cout << "integration " << nstep << "---------------------------------" << endl;
-			cout << "scale-square = " << ns << endl;
-			cout << "step_size = " << t_step << endl;
-			cout << "err_loc   = " << err_loc << endl;
-			cout << "next_step = " << t_new << endl;
+			std::cout << "integration " << nstep << "---------------------------------" << std::endl;
+			std::cout << "scale-square = " << ns << std::endl;
+			std::cout << "step_size = " << t_step << std::endl;
+			std::cout << "err_loc   = " << err_loc << std::endl;
+			std::cout << "next_step = " << t_new << std::endl;
 		}
 
 		step_min = MIN(step_min, t_step);

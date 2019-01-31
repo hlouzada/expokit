@@ -237,7 +237,7 @@ void mul(VecDoub_O v, const McooDoub_I a, const VecDoub_I v1)
 }
 
 template <class T>
-void mul(const T *x, const MatCoo<T> &a, T *y)
+void mul(T *y, const MatCoo<T> &a, const T *x)
 {
 	Long i;
 	for (i = 0; i < a.ncols(); ++i) {
@@ -246,6 +246,15 @@ void mul(const T *x, const MatCoo<T> &a, T *y)
 	for (i = 0; i < a.nnz(); ++i) {
 		y[a.row(i)] += a(i) * x[a.col(i)];
 	}
+}
+
+Doub norm_inf(McooComp_I A)
+{
+	VecDoub abs_sum(A.nrows(), 0.);
+	for (Int i = 1; i < A.nnz(); ++i) {
+		abs_sum(A.row(i)) += abs(A(i));
+	}
+	return max(abs_sum);
 }
 
 } // namespace slisc
