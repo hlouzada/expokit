@@ -68,4 +68,7 @@
       call ZGEXPV( n, m, t,v,w, tol, anorm,
      .             wsp,lwsp, iwsp,liwsp, zgcoov, itrace, iflag )
       print*, 'done testing!'
+
+
+      print*, 'DBLE((1.3314, 2.4413)) = ', DBLE((1.3314, 2.4413))
       end

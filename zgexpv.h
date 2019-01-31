@@ -8,11 +8,10 @@
 using std::cout; using std::endl;
 using namespace slisc;
 
-// translate as directly as possible for now:
-// * any variable values should not change
-// * change all variables to lower case
-// * don't change BLAC/LAPACK routines
-// * all pointer indexing (including +, -) is subtracted by 1 in place
+// ======== translation details ============
+// variables that subtracted 1 comparing to F77 version
+// arguments: 
+// internal variables: i, j, iexph, ifree, ih, iv, j1v
 
 void ZGEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I anorm,
 	Comp *wsp, Int_I lwsp, Int *iwsp, Int_I liwsp, McooComp_I matvec, Int_I itrace, Int_O iflag )
@@ -23,7 +22,7 @@ void ZGEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 
 	const Comp zero = 0., one = 1.;
 
-	Int i, j, k1, mh, mx, iv, ih, j1v, ns, ifree, lfree, iexph,
+	Int i, j, k1, mh, mx, ih, j1v, ns, ifree, lfree, iexph,
 		ireject, ibrkflag, mbrkdwn, nmult, nreject, nexph, nscale,
 		nstep;
 	Doub sgn, t_out, tbrkdwn, step_min, step_max, err_loc,
@@ -43,10 +42,10 @@ void ZGEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 
 	k1 = 2;
 	mh = m + 2;
-	iv = 1;
+	const Int iv = 0;
 	ih = iv + n*(m + 1) + n;
 	ifree = ih + mh*mh;
-	lfree = lwsp - ifree + 1;
+	lfree = lwsp - ifree;
 
 	ibrkflag = 0;
 	mbrkdwn = m;
@@ -98,48 +97,48 @@ void ZGEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 		nstep = nstep + 1;
 		t_step = MIN(t_out - t_now, t_new);
 		p1 = 1. / beta;
-		for (i = 1; i <= n; ++i)
-			wsp[iv + i - 2] = p1*w[i - 1];
+		for (i = 0; i < n; ++i)
+			wsp[iv + i] = p1*w[i];
 
-		for (i = 1; i <= mh*mh; ++i)
-			wsp[ih + i - 2] = zero;
+		for (i = 0; i < mh*mh; ++i)
+			wsp[ih + i] = zero;
 
 		j1v = iv + n;
 		Bool break_flag = false;
-		for (j = 1; j <= m; ++j) {
+		for (j = 0; j < m; ++j) {
 			nmult = nmult + 1;
-			mul(wsp + j1v - n - 1, matvec, wsp + j1v - 1);
-			for (i = 1; i <= j; ++i) {
-				cblas_zdotc_sub(n, wsp + iv + (i - 1)*n - 1, 1, wsp + j1v - 1, 1, &hij);
+			mul(wsp + j1v - n, matvec, wsp + j1v);
+			for (i = 0; i < j + 1; ++i) {
+				cblas_zdotc_sub(n, wsp + iv + i*n, 1, wsp + j1v, 1, &hij);
 				Comp temp = -hij;
-				cblas_zaxpy(n, &temp, wsp + iv + (i - 1)*n - 1, 1, wsp + j1v - 1, 1);
-				wsp[ih + (j - 1)*mh + i - 2] = hij;
+				cblas_zaxpy(n, &temp, wsp + iv + i*n, 1, wsp + j1v, 1);
+				wsp[ih + j*mh + i] = hij;
 			}
-			hj1j = cblas_dznrm2(n, wsp + j1v - 1, 1);
+			hj1j = cblas_dznrm2(n, wsp + j1v, 1);
 
 			if (hj1j <= break_tol) {
-				cout << "happy breakdown: mbrkdwn = " << j << "h = " << hj1j << endl;
+				cout << "happy breakdown: mbrkdwn = " << j + 1 << "h = " << hj1j << endl;
 				k1 = 0;
 				ibrkflag = 1;
-				mbrkdwn = j;
+				mbrkdwn = j + 1;
 				tbrkdwn = t_now;
 				t_step = t_out - t_now;
 				break_flag = true;
 				break;
 			}
-			wsp[ih + (j - 1)*mh + j - 1] = Comp(hj1j);
-			cblas_zdscal(n, 1. / hj1j, wsp + j1v - 1, 1);
-			j1v = j1v + n;
+			wsp[ih + j*mh + j + 1] = Comp(hj1j);
+			cblas_zdscal(n, 1. / hj1j, wsp + j1v, 1);
+			j1v += n;
 		}
 
 		if (!break_flag) {
 			nmult = nmult + 1;
-			mul(wsp + j1v - n - 1, matvec, wsp + j1v - 1);
-			avnorm = cblas_dznrm2(n, wsp + j1v - 1, 1);
+			mul(wsp + j1v - n, matvec, wsp + j1v);
+			avnorm = cblas_dznrm2(n, wsp + j1v, 1);
 		}
 
 		/*300*/
-		wsp[ih + m*mh + m] = one;
+		wsp[ih + m*mh + m + 1] = one;
 
 		ireject = 0;
 		/*401*/
@@ -147,17 +146,17 @@ void ZGEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 			nexph = nexph + 1;
 			mx = mbrkdwn + k1;
 			if (ideg != 0) {
-				ZGPADM(ideg, mx, sgn*t_step, wsp + ih - 1, mh,
-					wsp + ifree - 1, lfree, iwsp, iexph, ns, iflag);
+				ZGPADM(ideg, mx, sgn*t_step, wsp + ih, mh,
+					wsp + ifree, lfree, iwsp, iexph, ns, iflag);
 				iexph = ifree + iexph - 1;
 				nscale = nscale + ns;
 			}
 			else {
 				iexph = ifree;
-				for (i = 1; i <= mx; ++i)
-					wsp[iexph + i - 2] = zero;
-				wsp[iexph - 1] = one;
-				ZNCHBV(mx, sgn*t_step, wsp + ih - 1, mh, wsp + iexph - 1, wsp + ifree + mx - 1);
+				for (i = 0; i < mx; ++i)
+					wsp[iexph + i] = zero;
+				wsp[iexph] = one;
+				ZNCHBV(mx, sgn*t_step, wsp + ih, mh, wsp + iexph, wsp + ifree + mx);
 			}
 			/*402*/
 
@@ -165,8 +164,8 @@ void ZGEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 				err_loc = tol;
 			}
 			else {
-				p1 = abs(wsp[iexph + m - 1])   * beta;
-				p2 = abs(wsp[iexph + m]) * beta * avnorm;
+				p1 = abs(wsp[iexph + m])   * beta;
+				p2 = abs(wsp[iexph + m + 1]) * beta * avnorm;
 				if (p1 > 10.*p2) {
 					err_loc = p2;
 					xm = 1. / Doub(m);
@@ -209,7 +208,7 @@ void ZGEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 
 		mx = mbrkdwn + MAX(0, k1 - 1);
 		hij = Comp(beta);
-		cblas_zgemv(CblasColMajor, CblasNoTrans, n, mx, &hij, wsp + iv - 1, n, wsp + iexph - 1, 1, &zero, w, 1);
+		cblas_zgemv(CblasColMajor, CblasNoTrans, n, mx, &hij, wsp + iv, n, wsp + iexph, 1, &zero, w, 1);
 		beta = cblas_dznrm2(n, w, 1);
 		hump = MAX(hump, beta);
 
