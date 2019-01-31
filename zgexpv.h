@@ -18,7 +18,7 @@ void ZGEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 	Comp *wsp, Int_I lwsp, Int *iwsp, Int_I liwsp, McooComp_I matvec, Int_I itrace, Int_O iflag )
 {
 	const Int mxstep = 500, mxreject = 0, ideg = 6;
-	Doub delta = 1.2, gamma = 1.9;
+	Doub delta = 1.2, gamma = 0.9;
 
 
 	const Comp zero = 0., one = 1.;
@@ -38,7 +38,7 @@ void ZGEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 		iflag = -2;
 	if (m >= n || m <= 0)
 		iflag = -3;
-	if (iflag <= 0)
+	if (iflag != 0)
 		error("bad sizes (in input of ZGEXPV)");
 
 	k1 = 2;
