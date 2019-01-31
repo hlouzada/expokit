@@ -6,12 +6,11 @@ using namespace slisc;
 
 // translate as directly as possible for now:
 // * any variable values should not change
-// * change all variables to lower case
-// * don't change BLAC/LAPACK routines
 // * all pointer indexing (including +, -) is subtracted by 1 in place
 
 void ZNCHBV(Int_I m, Doub_I t, const Comp *H, Int_I ldh, Comp *y, Comp *wsp)
 {
+	error("the translated ZNCHBV has not been tested yet, do it now!");
 	const Comp zero = 0.;
 	const Int ndeg = 7;
 	Int i, j, k, ip, ih, iy, iz;

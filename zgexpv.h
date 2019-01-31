@@ -10,11 +10,10 @@ using namespace slisc;
 
 // ======== translation details ============
 // variables that subtracted 1 comparing to F77 version
-// arguments: 
-// internal variables: i, j, iexph, ifree, ih, iv, j1v
+// internal variables: i, j, ifree, ih, j1v, iv, iexph
 
 void ZGEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I anorm,
-	Comp *wsp, Int_I lwsp, Int *iwsp, Int_I liwsp, McooComp_I matvec, Int_I itrace, Int_O iflag )
+	Comp *wsp, Int_I lwsp, Int *iwsp, Int_I liwsp, McooComp_I matvec, Int_I itrace, Int_O iflag)
 {
 	const Int mxstep = 500, mxreject = 0, ideg = 6;
 	Doub delta = 1.2, gamma = 0.9;
@@ -66,7 +65,7 @@ void ZGEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 
 	p1 = 4. / 3.;
 	do {
-		/*1*/  p2 = p1 - 1.;
+		p2 = p1 - 1.;
 		p3 = p2 + p2 + p2;
 		eps = abs(p3 - 1.);
 	} while (eps == 0.);
@@ -148,7 +147,7 @@ void ZGEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 			if (ideg != 0) {
 				ZGPADM(ideg, mx, sgn*t_step, wsp + ih, mh,
 					wsp + ifree, lfree, iwsp, iexph, ns, iflag);
-				iexph = ifree + iexph - 1;
+				iexph += ifree;
 				nscale = nscale + ns;
 			}
 			else {
@@ -235,26 +234,26 @@ void ZGEXPV(Int_I n, Int_I m, Doub_I t, const Comp *v, Comp *w, Doub tol, Doub_I
 
 	} while (mxstep == 0 || nstep < mxstep);
 
-		iflag = 1;
+	iflag = 1;
 
-		/*500*/
+	/*500*/
 
-		iwsp[0] = nmult;
-		iwsp[1] = nexph;
-		iwsp[2] = nscale;
-		iwsp[3] = nstep;
-		iwsp[4] = nreject;
-		iwsp[5] = ibrkflag;
-		iwsp[6] = mbrkdwn;
+	iwsp[0] = nmult;
+	iwsp[1] = nexph;
+	iwsp[2] = nscale;
+	iwsp[3] = nstep;
+	iwsp[4] = nreject;
+	iwsp[5] = ibrkflag;
+	iwsp[6] = mbrkdwn;
 
-		wsp[0] = Comp(step_min);
-		wsp[1] = Comp(step_max);
-		wsp[2] = Comp(0.);
-		wsp[3] = Comp(0.);
-		wsp[4] = Comp(x_error);
-		wsp[5] = Comp(s_error);
-		wsp[6] = Comp(tbrkdwn);
-		wsp[7] = Comp(sgn*t_now);
-		wsp[8] = Comp(hump / vnorm);
-		wsp[9] = Comp(beta / vnorm);
-	}
+	wsp[0] = Comp(step_min);
+	wsp[1] = Comp(step_max);
+	wsp[2] = Comp(0.);
+	wsp[3] = Comp(0.);
+	wsp[4] = Comp(x_error);
+	wsp[5] = Comp(s_error);
+	wsp[6] = Comp(tbrkdwn);
+	wsp[7] = Comp(sgn*t_now);
+	wsp[8] = Comp(hump / vnorm);
+	wsp[9] = Comp(beta / vnorm);
+}

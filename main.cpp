@@ -19,28 +19,30 @@ Doub norm_inf(McooComp_I A)
 	return max(abs_sum);
 }
 
-void test_ZHEXPV()
+void test_EXPV()
 {
 	// === params ===========
-	Int n = 20; // matrix size
-	Int m = 10; // # krylov basis
+	Int n = 40; // matrix size
+	Int m = 20; // # krylov basis
 	Doub t = 1; // time
 	Doub tol = 0; // error tol
 	// ======================
 
 	Int i;
 	McooComp A;
-	A.resize(3*n - 2);
+	A.resize(n + 2*(n - 1) + 2*(n-5));
 	A.resize(n, n);
 	
 	for (i = 0; i < n; ++i) {
 		A.push(1., i, i);
 	}
 	for (i = 0; i < n - 1; ++i) {
-		A.push(0.1, i, i + 1);
+		A.push(0.6, i, i + 1);
+		A.push(0.6, i + 1, i);
 	}
-	for (i = 0; i < n - 1; ++i) {
-		A.push(0.1, i + 1, i);
+	for (i = 0; i < n - 5; ++i) {
+		A.push(0.4, i, i + 5);
+		A.push(0.4, i + 5, i);
 	}
 
 	VecComp v(n), w(n, 0.);
@@ -55,7 +57,7 @@ void test_ZHEXPV()
 	VecInt iwsp(liwsp);
 	Int itrace = 1;
 	Int iflag;
-	ZGEXPV(n, m, t, v.ptr(), w.ptr(), tol, anorm,
+	ZHEXPV(n, m, t, v.ptr(), w.ptr(), tol, anorm,
 		wsp.ptr(), lwsp, iwsp.ptr(), liwsp, A, itrace, iflag);
 	disp(w, 16);
 }
@@ -73,19 +75,5 @@ void disp(const Comp *ptr, Int_I n)
 
 int main()
 {
-	test_ZHEXPV();
-
-	/*Int Nsize = 2;
-	McooComp A;
-	A.resize(100);
-	A.resize(Nsize, Nsize);
-	A.set(1, 0, 0);
-	A.set(2, 1, 1);
-	A.set(Comp(0., 1.), 1, 0);
-	A.set(Comp(0., -1.), 0, 1);
-	VecComp v(Nsize), w(Nsize);
-	linspace(v, 1, 2);
-	w = 0.;
-	mul(w.ptr(), A, v.ptr());
-	disp(w);*/
+	test_EXPV();
 }

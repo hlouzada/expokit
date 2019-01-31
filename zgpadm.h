@@ -57,7 +57,7 @@ void ZGPADM(Int_I ideg, Int_I m, Doub_I t, const Comp *H, Int_I ldh, Comp *wsp, 
 	j = 2 * ideg;
 	wsp[icoef] = one;
 	for (k = 0; k < ideg; ++k) {
-		wsp[icoef + k + 1] = (wsp[icoef + k]*Doub(i - k)) / Doub((k+1)*(j - k));
+		wsp[icoef + k + 1] = (wsp[icoef + k] * Doub(i - k)) / Doub((k + 1)*(j - k));
 	}
 
 	cblas_zgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, m, m, m, &scale2, H, ldh,
@@ -85,8 +85,8 @@ void ZGPADM(Int_I ideg, Int_I m, Doub_I t, const Comp *H, Int_I ldh, Comp *wsp, 
 		for (j = 0; j < m; ++j)
 			wsp[ifree + j*(m + 1)] = wsp[ifree + j*(m + 1)] + wsp[icoef + k];
 
-		ip = (1 - iodd)*(ifree + 1) + iodd*ip - 1;
-		iq = iodd*(ifree + 1) + (1 - iodd)*(iq + 1) - 1;
+		ip = ifree + iodd*(ip - ifree);
+		iq = iodd*(ifree - iq) + iq;
 		ifree = iused;
 		iodd = 1 - iodd;
 		--k;
@@ -120,14 +120,13 @@ void ZGPADM(Int_I ideg, Int_I m, Doub_I t, const Comp *H, Int_I ldh, Comp *wsp, 
 	else {
 		iodd = 1;
 		for (k = 0; k < ns; ++k) {
-			iget = iodd*(ip + 1) + (1 - iodd)*(iq + 1) - 1;
-			iput = (1 - iodd)*(ip + 1) + iodd*(iq + 1) - 1;
+			iget = iodd*(ip - iq) + iq;
+			iput = ip + iodd*(iq - ip);
 			cblas_zgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, m, m, m, &one, wsp + iget, m,
 				wsp + iget, m, &zero, wsp + iput, m);
 			iodd = 1 - iodd;
 		}
 	}
 
-	/*200*/
 	iexph = iput;
 }
