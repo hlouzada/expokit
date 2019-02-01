@@ -17,7 +17,7 @@ void test_EXPV()
 	Int n = 40; // matrix size
 	Int m = 20; // # krylov basis
 	Doub t = 1; // time
-	Doub tol = 0; // error tol
+	Doub tol = 0.; // error tol
 	// ======================
 
 	Int i;
@@ -45,7 +45,6 @@ void test_EXPV()
 	Int lwsp = MAX(10, SQR(n*(m + 2) + 5 * (m + 2)) + 7);
 	VecComp wsp(lwsp);
 	Int liwsp = MAX(m + 1, 7);
-	liwsp = liwsp + 1;
 	VecInt iwsp(liwsp);
 	Int itrace = 1;
 	Int iflag;
@@ -56,17 +55,6 @@ void test_EXPV()
 	ZGEXPV(n, m, t, v.ptr(), w.ptr(), tol, anorm,
 		wsp.ptr(), lwsp, iwsp.ptr(), liwsp, A, itrace, iflag);
 	disp(w, 16);
-}
-
-void disp(const Comp *ptr, Int_I n)
-{
-	Int i;
-	for (i = 0; i < 100; ++i) {
-		cout << "\n";
-	}
-	for (i = 0; i < n; ++i) {
-		cout << ptr[i] << endl;
-	}
 }
 
 int main()
