@@ -1,4 +1,4 @@
-# Expokit (C++ translation)
+# Expokit (C++ translation) 
 [Expokit](https://www.maths.uq.edu.au/expokit/download.html) is a numerical library that calculates the matrix exponential or it's operation on a vector.
 
 This project is a manual translation of some expokit subroutines to C++. With a trivial modification, one can change them to C as well.
