@@ -44,7 +44,7 @@ void test_EXPV()
 
 	Int lwsp = MAX(10, SQR(n*(m + 2) + 5 * (m + 2)) + 7);
 	VecComp wsp(lwsp);
-	Int liwsp = MAX(m + 1, 7);
+	Int liwsp = MAX(m + 2, 7);
 	VecInt iwsp(liwsp);
 	Int itrace = 1;
 	Int iflag;
