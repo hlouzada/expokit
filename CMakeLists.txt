@@ -49,26 +49,40 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-# Prepping the module
+# Common variables
 set(f2py_module_name "expokit")
 set(fortran_src_file "${CMAKE_SOURCE_DIR}/lib")
 set(f2py_module_c "${f2py_module_name}module.c")
+set(f2py_signature_pyf "${f2py_module_name}.pyf")
 
-# Target for enforcing dependencies
-add_custom_target(genpyf
+# Generate sources
+add_custom_target(
+  genpyf
+  DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${f2py_signature_pyf}"
+)
+add_custom_command(
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${f2py_signature_pyf}"
+    COMMAND ${Python_EXECUTABLE}  -m "numpy.f2py"
+                     -m "${f2py_module_name}"
+                     "${fortran_src_file}/*.f"
+                     -h "${CMAKE_CURRENT_BINARY_DIR}/${f2py_signature_pyf}"
+                     --lower # Important
+                     --overwrite-signature
+    DEPENDS "${fortran_src_file}/*.f"
+)
+add_custom_target(
+  genpyc
   DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${f2py_module_c}"
 )
 add_custom_command(
   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${f2py_module_c}"
-  COMMAND ${PYTHON_EXECUTABLE}  -m "numpy.f2py"
-                   "${fortran_src_file}/*.f"
-                   -m "${f2py_module_name}"
-                   --lower # Important
-  DEPENDS "${fortran_src_file}/*.f"
+  COMMAND ${Python_EXECUTABLE}  -m "numpy.f2py"
+                  "${CMAKE_CURRENT_BINARY_DIR}/${f2py_signature_pyf}"
+  DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${f2py_signature_pyf}"
 )
 
 add_library(${CMAKE_PROJECT_NAME} MODULE
-            "${f2py_module_name}module.c"
+            "${f2py_module_c}"
             "${F2PY_INCLUDE_DIR}/fortranobject.c"
             "${fortran_src_file}")
 
@@ -91,5 +105,6 @@ if (UNIX)
 endif()
 
 add_dependencies(${CMAKE_PROJECT_NAME} genpyf)
+add_dependencies(${CMAKE_PROJECT_NAME} genpyc)
 
 install(TARGETS ${CMAKE_PROJECT_NAME} DESTINATION expokit)
